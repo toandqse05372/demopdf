@@ -17,10 +17,13 @@ import java.nio.file.Paths;
 public class DemoApplication {
 
     public static void main(String[] args) throws IOException, DocumentException, URISyntaxException {
+        //lấy file
         Path path = Paths.get("C:\\Users\\quang\\OneDrive\\Documents\\My Games\\test.txt");
         Charset charset = StandardCharsets.UTF_8;
 
+        //đọc file
         String content = new String(Files.readAllBytes(path), charset);
+        //đổi chữ trong file
         content = content.replaceAll("bar", "fooo");
         System.out.println(content);
         Files.write(path, content.getBytes(charset));
@@ -41,22 +44,27 @@ public class DemoApplication {
 //        document.save("pdfBoxHelloWorld1.pdf");
 //        document.close();
 
+        //tạo file pdf
         Document document = new Document();
         PdfWriter pdfWriter = PdfWriter.getInstance(document, new FileOutputStream("HelloWorld.pdf"));
 
+        //mở streaming data vào file
         document.open();
         PdfContentByte pdfContentByte = pdfWriter.getDirectContent();
 
+        //đưa ảnh vào
         Path pathI = Paths.get(ClassLoader.getSystemResource("images.jpg").toURI());
         Image img = Image.getInstance(pathI.toAbsolutePath().toString());
         img.scaleAbsolute(200, 40);
         document.add(img);
 
+        //đưa chữ vào
         Font font = FontFactory.getFont(FontFactory.COURIER, 16, BaseColor.BLACK);
         Chunk chunk1 = new Chunk(content, font);
         document.add(new Paragraph("\n"));
         document.add(chunk1);
 
+        //gen barcode
         Barcode128 barcode128 = new Barcode128();
         barcode128.setCode("hsdasjashfdkfjdssggdgd");
         barcode128.setCodeType(Barcode128.CODE128);
@@ -68,6 +76,7 @@ public class DemoApplication {
 
 //        code128Image.scalePercent(100);
 //        code128Image.setRotation(45);
+        //và đưa vào
         document.add(code128Image);
 
 //        BarcodeEAN barcodeEAN = new BarcodeEAN();
@@ -84,6 +93,7 @@ public class DemoApplication {
 //        qrcodeImage.scalePercent(100);
 //        document.add(qrcodeImage);
 
+        //tắt streaming
         document.close();
     }
 
