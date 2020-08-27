@@ -4,97 +4,83 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @SpringBootApplication
 public class DemoApplication {
 
     public static void main(String[] args) throws IOException, DocumentException, URISyntaxException {
         //lấy file
-        Path path = Paths.get("C:\\Users\\quang\\OneDrive\\Documents\\My Games\\test.txt");
-        Charset charset = StandardCharsets.UTF_8;
-
-        //đọc file
-        String content = new String(Files.readAllBytes(path), charset);
-        //đổi chữ trong file
-        content = content.replaceAll("bar", "fooo");
-        System.out.println(content);
-        Files.write(path, content.getBytes(charset));
-
-//        PDDocument document = new PDDocument();
-//        PDPage page = new PDPage();
-//        document.addPage(page);
-//
-//        PDPageContentStream contentStream = new PDPageContentStream(document, page);
-//
-//        contentStream.setFont(PDType1Font.COURIER, 12);
-//        contentStream.beginText();
-//        String content1 = content.replaceAll("\n","<br/>");
-//        contentStream.showText(content1);
-//        contentStream.endText();
-//        contentStream.close();
-//
-//        document.save("pdfBoxHelloWorld1.pdf");
-//        document.close();
-
-        //tạo file pdf
         Document document = new Document();
-        PdfWriter pdfWriter = PdfWriter.getInstance(document, new FileOutputStream("HelloWorld.pdf"));
+        File file = new File("Test.pdf");
+        FileOutputStream fos = new FileOutputStream(file);
+        PdfWriter pdfWriter = PdfWriter.getInstance(document, fos);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        //get template file
+        String content = getContent("default.txt");
+        //get image
+        Image img = getImage("default.png");
+        //replace template
+        String fillContent = content.replace("NAMEx",
+                "Vé lẻ Thiên đường bảo sơm"
+                        + "[Trẻ em]")
+                .replace("PRICEx",
+                        "100.000 VND")
+                .replace("REDEMPTION_DATEx", dateFormat.format(new Date()))
+                .replace("PLACEx", "Thiên đường Bảo sơn");
 
-        //mở streaming data vào file
+        //start stream file
         document.open();
-        PdfContentByte pdfContentByte = pdfWriter.getDirectContent();
 
-        //đưa ảnh vào
-        Path pathI = Paths.get(ClassLoader.getSystemResource("images.jpg").toURI());
+        for (int i = 0; i < 10; i++) {
+            //phần cần sửa
+                PdfContentByte pdfContentByte = pdfWriter.getDirectContent();
+                //enter image
+                document.add(img);
+                //enter text
+                Chunk chunk1 = new Chunk(fillContent, getFont());
+                document.add(new Paragraph("\n"));
+                document.add(chunk1);
+                //gen barcode
+                Barcode128 barcode128 = new Barcode128();
+                barcode128.setCode("1992323");
+                barcode128.setCodeType(Barcode128.CODE128);
+                Image code128Image = barcode128.createImageWithBarcode(pdfContentByte, null, null);
+                code128Image.setInterpolation(true);
+                document.add(code128Image);
+        }
+
+        document.close();
+    }
+
+    public static String getContent(String contentFile) throws IOException {
+        Path path = Paths.get("src/main/resources/ticketForm/"+contentFile);
+        Charset charset = StandardCharsets.UTF_8;
+        //đọc file
+        return new String(Files.readAllBytes(path), charset);
+    }
+
+    public static Image getImage(String imageName) throws IOException, BadElementException, URISyntaxException {
+        Path pathI = Paths.get(ClassLoader.getSystemResource("image/"+imageName).toURI());
         Image img = Image.getInstance(pathI.toAbsolutePath().toString());
         img.scaleAbsolute(200, 40);
-        document.add(img);
+        return  img;
+    }
 
-        //đưa chữ vào
-        Font font = FontFactory.getFont(FontFactory.COURIER, 16, BaseColor.BLACK);
-        Chunk chunk1 = new Chunk(content, font);
-        document.add(new Paragraph("\n"));
-        document.add(chunk1);
-
-        //gen barcode
-        Barcode128 barcode128 = new Barcode128();
-        barcode128.setCode("hsdasjashfdkfjdssggdgd");
-        barcode128.setCodeType(Barcode128.CODE128);
-        barcode128.setFont(null);
-        Image code128Image = barcode128.createImageWithBarcode(pdfContentByte, null, null);
-        code128Image.setInterpolation(true);
-//        code128Image.scaleAbsolute(100, 100);
-//        code128Image.setRotationDegrees((float) -45);
-
-//        code128Image.scalePercent(100);
-//        code128Image.setRotation(45);
-        //và đưa vào
-        document.add(code128Image);
-
-//        BarcodeEAN barcodeEAN = new BarcodeEAN();
-//        barcodeEAN.setCodeType(BarcodeEAN.EAN13);
-//        barcodeEAN.setCode("1234523453323");
-//        Image codeEANImage = barcodeEAN.createImageWithBarcode(pdfContentByte, null, null);
-//        codeEANImage.setAbsolutePosition(20, 600);
-//        codeEANImage.scalePercent(100);
-//        document.add(codeEANImage);
-//
-//        BarcodeQRCode barcodeQrcode = new BarcodeQRCode("examples.javacodegeeks.com/author/chandan-singh", 1, 1, null);
-//        Image qrcodeImage = barcodeQrcode.getImage();
-//        qrcodeImage.setAbsolutePosition(20, 500);
-//        qrcodeImage.scalePercent(100);
-//        document.add(qrcodeImage);
-
-        //tắt streaming
-        document.close();
+    public static Font getFont() throws IOException, DocumentException {
+        Font font = new Font(BaseFont.createFont("src/main/resources/font/vuArial.ttf",BaseFont.IDENTITY_H, BaseFont.EMBEDDED));
+        return font;
     }
 
 
